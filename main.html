@@ -379,14 +379,14 @@
             <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
                 <div class="upload-icon">📊</div>
                 <p>Click to upload or drag and drop your Excel file here</p>
-                <p style="font-size: 0.9rem; color: #999;">Supports .xlsx, .xls files</p>
+                <p style="font-size: 0.9rem; color: #999;">Supports .xlsx, .xls, .xlsm, .xlsb, .csv files</p>
             </div>
 
             <input 
                 type="file" 
                 id="fileInput" 
                 class="file-input" 
-                accept=".xlsx,.xls"
+                accept=".xlsx,.xls,.xlsm,.xlsb,.csv"
             >
 
             <div class="file-info" id="fileInfo"></div>
@@ -473,8 +473,8 @@
         });
 
         function handleFile(file) {
-            if (!file.name.match(/\.(xlsx|xls)$/)) {
-                alert('Please upload a valid Excel file (.xlsx or .xls)');
+            if (!file.name.match(/\.(xlsx|xls|xlsm|xlsb|csv)$/i)) {
+                alert('Please upload a valid Excel or CSV file (.xlsx, .xls, .xlsm, .xlsb, .csv)');
                 return;
             }
 
@@ -501,11 +501,17 @@
             reader.onload = function(e) {
                 try {
                     const data = new Uint8Array(e.target.result);
-                    workbook = XLSX.read(data, { type: 'array', cellStyles: true });
+                    // Read with options to support older Excel formats
+                    workbook = XLSX.read(data, { 
+                        type: 'array', 
+                        cellStyles: true,
+                        cellDates: true,
+                        cellNF: true
+                    });
                     
                     displayExcelContent();
                 } catch (error) {
-                    alert('Error reading Excel file: ' + error.message);
+                    alert('Error reading file: ' + error.message);
                     console.error('Error:', error);
                 }
             };
