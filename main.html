@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Excel Viewer">
-    <title>Excel Viewer</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>VGT Revenue Report Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -14,606 +14,508 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 20px;
         }
 
-        header {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 1rem 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        nav {
-            max-width: 1400px;
+        .container {
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 0 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
+        .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
             color: white;
-            font-weight: bold;
+            padding: 30px;
+            text-align: center;
         }
 
-        .logout-button {
-            padding: 0.5rem 1.5rem;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
         }
 
-        .logout-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
         }
 
-        main {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 3rem 2rem;
+        .content {
+            padding: 40px;
         }
 
         .upload-section {
-            background: white;
-            border-radius: 20px;
-            padding: 3rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            animation: fadeInUp 0.6s ease;
-        }
-
-        .upload-section h1 {
-            color: #667eea;
-            font-size: 2rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .upload-area {
             border: 3px dashed #667eea;
-            border-radius: 15px;
-            padding: 3rem;
+            border-radius: 10px;
+            padding: 40px;
             text-align: center;
-            background: #f8f9ff;
-            transition: all 0.3s;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
             cursor: pointer;
         }
 
-        .upload-area:hover {
-            background: #f0f2ff;
+        .upload-section:hover {
             border-color: #764ba2;
+            background: #f8f9ff;
         }
 
-        .upload-area.dragover {
+        .upload-section.dragover {
             background: #e8ebff;
             border-color: #764ba2;
-            transform: scale(1.02);
         }
 
-        .upload-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-        }
-
-        .upload-area p {
-            color: #666;
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
         }
 
         .file-input {
             display: none;
         }
 
-        .upload-button {
-            padding: 0.875rem 2rem;
+        .file-label {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
+            padding: 15px 30px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 1rem;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+            display: inline-block;
         }
 
-        .upload-button:hover {
+        .file-label:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
-        .file-info {
+        .file-name {
+            margin-top: 15px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .venue-section {
             display: none;
-            background: #e8f5e9;
-            padding: 1rem;
-            border-radius: 10px;
-            margin-top: 1rem;
-            color: #2e7d32;
-            font-weight: 500;
+            margin-top: 30px;
         }
 
-        .file-info.show {
+        .venue-section.active {
             display: block;
-            animation: fadeIn 0.3s ease;
         }
 
-        .action-buttons {
-            display: none;
-            gap: 1rem;
-            margin-top: 1.5rem;
-            justify-content: center;
+        .form-group {
+            margin-bottom: 25px;
         }
 
-        .action-buttons.show {
-            display: flex;
-        }
-
-        .read-button {
-            padding: 0.875rem 2.5rem;
-            background: #4caf50;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
             font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            font-size: 1.1em;
         }
 
-        .read-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
-        }
-
-        .clear-button {
-            padding: 0.875rem 2rem;
-            background: #f44336;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .clear-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(244, 67, 54, 0.3);
-        }
-
-        .excel-content {
-            display: none;
+        .form-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
             background: white;
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            animation: fadeInUp 0.6s ease;
-            overflow-x: auto;
         }
 
-        .excel-content.show {
-            display: block;
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
         }
 
-        .sheet-tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid #e0e0e0;
-            flex-wrap: wrap;
-        }
-
-        .sheet-tab {
-            padding: 0.75rem 1.5rem;
-            background: #f5f5f5;
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
             border: none;
-            border-radius: 10px 10px 0 0;
-            font-weight: 500;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info-box {
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .info-box li {
+            padding: 5px 0;
             color: #666;
         }
 
-        .sheet-tab:hover {
-            background: #e8ebff;
-        }
-
-        .sheet-tab.active {
-            background: #667eea;
-            color: white;
-        }
-
-        .sheet-content {
+        .status-message {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
             display: none;
         }
 
-        .sheet-content.active {
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
             display: block;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            font-size: 0.9rem;
-        }
-
-        th, td {
-            padding: 0.875rem;
-            text-align: left;
-            border: 1px solid #e0e0e0;
-        }
-
-        th {
-            background: #667eea;
-            color: white;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-
-        tr:hover {
-            background: #f0f2ff;
-        }
-
-        td {
-            color: #333;
-        }
-
-        td[style*="text-align: right"],
-        td[data-type="number"] {
-            text-align: right;
-            font-variant-numeric: tabular-nums;
-        }
-
-        td[data-type="date"] {
-            white-space: nowrap;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @media (max-width: 768px) {
-            nav {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .upload-section {
-                padding: 2rem;
-            }
-
-            .upload-area {
-                padding: 2rem;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            table {
-                font-size: 0.8rem;
-            }
-
-            th, td {
-                padding: 0.5rem;
-            }
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
         }
     </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo">Excel Viewer</div>
-            <div class="nav-right">
-                <div class="user-info">
-                    <div class="user-avatar" id="userAvatar"></div>
-                    <span id="usernameDisplay"></span>
+    <div class="container">
+        <div class="header">
+            <h1>VGT Revenue Report Generator</h1>
+            <p>Upload XML file and generate PDF reports for venues</p>
+        </div>
+
+        <div class="content">
+            <div class="upload-section" id="uploadSection">
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" class="file-input" accept=".xml" />
+                    <label for="fileInput" class="file-label">
+                        📁 Choose XML File
+                    </label>
                 </div>
-                <button class="logout-button" onclick="logout()">Logout</button>
-            </div>
-        </nav>
-    </header>
-
-    <main>
-        <section class="upload-section">
-            <h1>Upload Excel File</h1>
-            
-            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-                <div class="upload-icon">📊</div>
-                <p>Click to upload or drag and drop your Excel file here</p>
-                <p style="font-size: 0.9rem; color: #999;">Supports .xlsx, .xls, .xlsm, .xlsb, .csv files</p>
+                <div class="file-name" id="fileName">No file selected</div>
             </div>
 
-            <input 
-                type="file" 
-                id="fileInput" 
-                class="file-input" 
-                accept=".xlsx,.xls,.xlsm,.xlsb,.csv"
-            >
+            <div id="statusMessage" class="status-message"></div>
 
-            <div class="file-info" id="fileInfo"></div>
+            <div class="venue-section" id="venueSection">
+                <div class="form-group">
+                    <label for="venueSelect">Select Venue:</label>
+                    <select id="venueSelect">
+                        <option value="">-- Select a venue --</option>
+                    </select>
+                </div>
 
-            <div class="action-buttons" id="actionButtons">
-                <button class="read-button" onclick="readExcelFile()">Read & Display File</button>
-                <button class="clear-button" onclick="clearFile()">Clear</button>
+                <button class="btn" id="generateBtn" disabled>Generate PDF Report</button>
+
+                <div class="info-box">
+                    <h3>📊 Report Information</h3>
+                    <ul id="venueInfo">
+                        <li>Select a venue to see details</li>
+                    </ul>
+                </div>
             </div>
-        </section>
-
-        <section class="excel-content" id="excelContent">
-            <div class="sheet-tabs" id="sheetTabs"></div>
-            <div id="sheetContainer"></div>
-        </section>
-    </main>
+        </div>
+    </div>
 
     <script>
-        let uploadedFile = null;
-        let workbook = null;
+        let xmlData = null;
+        let venuesData = {};
 
-        // Check if user is logged in
-        function checkAuth() {
-            const isLoggedIn = sessionStorage.getItem('isLoggedIn');
-            const username = sessionStorage.getItem('username');
-
-            if (!isLoggedIn || !username) {
-                window.location.href = 'index.html';
-                return;
-            }
-
-            document.getElementById('usernameDisplay').textContent = username;
-            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
-        }
-
-        function logout() {
-            sessionStorage.removeItem('isLoggedIn');
-            sessionStorage.removeItem('username');
-            window.location.href = 'index.html';
-        }
-
-        // File upload handling
-        const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
-        const fileInfo = document.getElementById('fileInfo');
-        const actionButtons = document.getElementById('actionButtons');
+        const fileName = document.getElementById('fileName');
+        const uploadSection = document.getElementById('uploadSection');
+        const venueSection = document.getElementById('venueSection');
+        const venueSelect = document.getElementById('venueSelect');
+        const generateBtn = document.getElementById('generateBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const venueInfo = document.getElementById('venueInfo');
 
-        // Prevent default drag behaviors
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
+        // Drag and drop
+        uploadSection.addEventListener('dragover', (e) => {
             e.preventDefault();
-            e.stopPropagation();
-        }
-
-        // Highlight drop area when file is dragged over
-        ['dragenter', 'dragover'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, () => {
-                uploadArea.classList.add('dragover');
-            }, false);
+            uploadSection.classList.add('dragover');
         });
 
-        ['dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, () => {
-                uploadArea.classList.remove('dragover');
-            }, false);
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('dragover');
         });
 
-        // Handle dropped files
-        uploadArea.addEventListener('drop', (e) => {
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
             const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
+            if (files.length > 0 && files[0].name.endsWith('.xml')) {
+                fileInput.files = files;
+                handleFileSelect(files[0]);
             }
-        }, false);
+        });
 
-        // Handle file input change
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
+                handleFileSelect(e.target.files[0]);
             }
         });
 
-        function handleFile(file) {
-            if (!file.name.match(/\.(xlsx|xls|xlsm|xlsb|csv)$/i)) {
-                alert('Please upload a valid Excel or CSV file (.xlsx, .xls, .xlsm, .xlsb, .csv)');
-                return;
-            }
-
-            uploadedFile = file;
-            fileInfo.textContent = `✓ File uploaded: ${file.name} (${formatFileSize(file.size)})`;
-            fileInfo.classList.add('show');
-            actionButtons.classList.add('show');
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-        }
-
-        function readExcelFile() {
-            if (!uploadedFile) {
-                alert('Please upload a file first');
-                return;
-            }
-
+        function handleFileSelect(file) {
+            fileName.textContent = file.name;
             const reader = new FileReader();
             
-            reader.onload = function(e) {
+            reader.onload = (e) => {
                 try {
-                    const data = new Uint8Array(e.target.result);
-                    // Read with options to support older Excel formats
-                    workbook = XLSX.read(data, { 
-                        type: 'array', 
-                        cellStyles: true,
-                        cellDates: true,
-                        cellNF: true
-                    });
-                    
-                    displayExcelContent();
+                    const parser = new DOMParser();
+                    xmlData = parser.parseFromString(e.target.result, 'text/xml');
+                    parseXMLData();
+                    populateVenueDropdown();
+                    venueSection.classList.add('active');
+                    showStatus('File loaded successfully!', 'success');
                 } catch (error) {
-                    alert('Error reading file: ' + error.message);
-                    console.error('Error:', error);
+                    showStatus('Error parsing XML file: ' + error.message, 'error');
                 }
             };
-
-            reader.readAsArrayBuffer(uploadedFile);
-        }
-
-        function displayExcelContent() {
-            const excelContent = document.getElementById('excelContent');
-            const sheetTabs = document.getElementById('sheetTabs');
-            const sheetContainer = document.getElementById('sheetContainer');
-
-            sheetTabs.innerHTML = '';
-            sheetContainer.innerHTML = '';
-
-            workbook.SheetNames.forEach((sheetName, index) => {
-                // Create tab button
-                const tab = document.createElement('button');
-                tab.className = 'sheet-tab' + (index === 0 ? ' active' : '');
-                tab.textContent = sheetName;
-                tab.onclick = () => switchSheet(index);
-                sheetTabs.appendChild(tab);
-
-                // Create sheet content
-                const sheetDiv = document.createElement('div');
-                sheetDiv.className = 'sheet-content' + (index === 0 ? ' active' : '');
-                sheetDiv.id = `sheet-${index}`;
-
-                const worksheet = workbook.Sheets[sheetName];
-                const htmlTable = XLSX.utils.sheet_to_html(worksheet, { editable: false });
-                
-                sheetDiv.innerHTML = htmlTable;
-
-                // Process the table to maintain formatting
-                const table = sheetDiv.querySelector('table');
-                if (table) {
-                    processTableFormatting(table, worksheet);
-                }
-
-                sheetContainer.appendChild(sheetDiv);
-            });
-
-            excelContent.classList.add('show');
-            excelContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        function processTableFormatting(table, worksheet) {
-            const range = XLSX.utils.decode_range(worksheet['!ref']);
             
-            for (let R = range.s.r; R <= range.e.r; R++) {
-                for (let C = range.s.c; C <= range.e.c; C++) {
-                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-                    const cell = worksheet[cellAddress];
+            reader.readAsText(file);
+        }
+
+        function parseXMLData() {
+            venuesData = {};
+            const venues = xmlData.getElementsByTagName('Venue');
+            
+            for (let venue of venues) {
+                const venueName = venue.getAttribute('Venue_Name');
+                const siteLicense = venue.getAttribute('Site_License_Number');
+                
+                venuesData[venueName] = {
+                    siteLicense: siteLicense,
+                    periods: []
+                };
+                
+                const periods = venue.getElementsByTagName('Accounting_Period_ID');
+                for (let period of periods) {
+                    const periodData = {
+                        startDate: period.getAttribute('Accounting_Period_StartDate'),
+                        machines: []
+                    };
                     
-                    if (cell) {
-                        const cellElement = table.rows[R]?.cells[C];
-                        if (cellElement) {
-                            // Detect cell type and add data attribute
-                            if (cell.t === 'n') {
-                                cellElement.setAttribute('data-type', 'number');
-                            } else if (cell.t === 'd') {
-                                cellElement.setAttribute('data-type', 'date');
-                            }
-                        }
+                    const machines = period.getElementsByTagName('Unique_IdentifierGrp');
+                    for (let machine of machines) {
+                        periodData.machines.push({
+                            spotName: machine.getAttribute('Spot_Name'),
+                            uniqueId: machine.getAttribute('Unique_Identifier'),
+                            licenseNumber: machine.getAttribute('License_Number'),
+                            cashIn: parseFloat(machine.getAttribute('Cash_In')),
+                            voucherIn: parseFloat(machine.getAttribute('Voucher_In')),
+                            fundsIn: parseFloat(machine.getAttribute('Funds_In')),
+                            fundsOut: parseFloat(machine.getAttribute('Funds_Out')),
+                            currentCredits: parseFloat(machine.getAttribute('Current_Credits')),
+                            netTerminalIncome: parseFloat(machine.getAttribute('Net_Terminal_Income')),
+                            amtPlayed: parseFloat(machine.getAttribute('Amt_Played')),
+                            amountWon: parseFloat(machine.getAttribute('Amount_Won')),
+                            netPlay: parseFloat(machine.getAttribute('Net_Play'))
+                        });
                     }
+                    
+                    venuesData[venueName].periods.push(periodData);
                 }
             }
         }
 
-        function switchSheet(index) {
-            const tabs = document.querySelectorAll('.sheet-tab');
-            const sheets = document.querySelectorAll('.sheet-content');
-
-            tabs.forEach((tab, i) => {
-                if (i === index) {
-                    tab.classList.add('active');
-                } else {
-                    tab.classList.remove('active');
-                }
-            });
-
-            sheets.forEach((sheet, i) => {
-                if (i === index) {
-                    sheet.classList.add('active');
-                } else {
-                    sheet.classList.remove('active');
-                }
-            });
+        function populateVenueDropdown() {
+            venueSelect.innerHTML = '<option value="">-- Select a venue --</option>';
+            for (let venueName in venuesData) {
+                const option = document.createElement('option');
+                option.value = venueName;
+                option.textContent = venueName;
+                venueSelect.appendChild(option);
+            }
         }
 
-        function clearFile() {
-            uploadedFile = null;
-            workbook = null;
-            fileInput.value = '';
-            fileInfo.classList.remove('show');
-            actionButtons.classList.remove('show');
-            document.getElementById('excelContent').classList.remove('show');
-            fileInfo.textContent = '';
+        venueSelect.addEventListener('change', () => {
+            const selectedVenue = venueSelect.value;
+            if (selectedVenue) {
+                generateBtn.disabled = false;
+                displayVenueInfo(selectedVenue);
+            } else {
+                generateBtn.disabled = true;
+                venueInfo.innerHTML = '<li>Select a venue to see details</li>';
+            }
+        });
+
+        function displayVenueInfo(venueName) {
+            const venue = venuesData[venueName];
+            let totalFundsIn = 0;
+            let totalFundsOut = 0;
+            let totalNetIncome = 0;
+            let machineCount = 0;
+            
+            venue.periods.forEach(period => {
+                period.machines.forEach(machine => {
+                    totalFundsIn += machine.fundsIn;
+                    totalFundsOut += machine.fundsOut;
+                    totalNetIncome += machine.netTerminalIncome;
+                });
+                machineCount = Math.max(machineCount, period.machines.length);
+            });
+            
+            venueInfo.innerHTML = `
+                <li><strong>Venue:</strong> ${venueName}</li>
+                <li><strong>License #:</strong> ${venue.siteLicense}</li>
+                <li><strong>Number of Machines:</strong> ${machineCount}</li>
+                <li><strong>Number of Periods:</strong> ${venue.periods.length}</li>
+                <li><strong>Total Funds In:</strong> $${totalFundsIn.toFixed(2)}</li>
+                <li><strong>Total Funds Out:</strong> $${totalFundsOut.toFixed(2)}</li>
+                <li><strong>Total Net Income:</strong> $${totalNetIncome.toFixed(2)}</li>
+            `;
         }
 
-        // Run auth check on page load
-        checkAuth();
+        generateBtn.addEventListener('click', () => {
+            const selectedVenue = venueSelect.value;
+            if (selectedVenue) {
+                generatePDF(selectedVenue);
+            }
+        });
+
+        function generatePDF(venueName) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const venue = venuesData[venueName];
+            
+            // Title
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text('VGT Revenue Report', 105, 20, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Establishment: ${venueName}`, 20, 35);
+            doc.text(`Site License: ${venue.siteLicense}`, 20, 42);
+            
+            // Get date range
+            const startDate = new Date(venue.periods[0].startDate).toLocaleDateString();
+            const endDate = new Date(venue.periods[venue.periods.length - 1].startDate).toLocaleDateString();
+            doc.text(`Period: ${startDate} to ${endDate}`, 20, 49);
+            
+            let yPosition = 60;
+            
+            // Summary for each machine
+            const machineMap = {};
+            venue.periods.forEach(period => {
+                period.machines.forEach(machine => {
+                    if (!machineMap[machine.spotName]) {
+                        machineMap[machine.spotName] = {
+                            uniqueId: machine.uniqueId,
+                            licenseNumber: machine.licenseNumber,
+                            fundsIn: 0,
+                            fundsOut: 0,
+                            netIncome: 0,
+                            amtPlayed: 0,
+                            amtWon: 0
+                        };
+                    }
+                    machineMap[machine.spotName].fundsIn += machine.fundsIn;
+                    machineMap[machine.spotName].fundsOut += machine.fundsOut;
+                    machineMap[machine.spotName].netIncome += machine.netTerminalIncome;
+                    machineMap[machine.spotName].amtPlayed += machine.amtPlayed;
+                    machineMap[machine.spotName].amtWon += machine.amountWon;
+                });
+            });
+            
+            // Create table data
+            const tableData = [];
+            for (let spotName in machineMap) {
+                const m = machineMap[spotName];
+                const paybackPct = m.amtPlayed > 0 ? ((m.amtWon / m.amtPlayed) * 100).toFixed(2) : '0.00';
+                tableData.push([
+                    spotName,
+                    m.uniqueId.substring(0, 15),
+                    `$${m.fundsIn.toFixed(2)}`,
+                    `$${m.fundsOut.toFixed(2)}`,
+                    `$${m.netIncome.toFixed(2)}`,
+                    `${paybackPct}%`
+                ]);
+            }
+            
+            // Calculate totals
+            let totalFundsIn = 0, totalFundsOut = 0, totalNetIncome = 0, totalPlayed = 0, totalWon = 0;
+            for (let key in machineMap) {
+                totalFundsIn += machineMap[key].fundsIn;
+                totalFundsOut += machineMap[key].fundsOut;
+                totalNetIncome += machineMap[key].netIncome;
+                totalPlayed += machineMap[key].amtPlayed;
+                totalWon += machineMap[key].amtWon;
+            }
+            
+            const avgPayback = totalPlayed > 0 ? ((totalWon / totalPlayed) * 100).toFixed(2) : '0.00';
+            
+            tableData.push([
+                'TOTALS',
+                '',
+                `$${totalFundsIn.toFixed(2)}`,
+                `$${totalFundsOut.toFixed(2)}`,
+                `$${totalNetIncome.toFixed(2)}`,
+                `${avgPayback}%`
+            ]);
+            
+            doc.autoTable({
+                startY: yPosition,
+                head: [['VGT', 'UID', 'Funds In', 'Funds Out', 'Net Income', 'Payback %']],
+                body: tableData,
+                theme: 'striped',
+                headStyles: { fillColor: [102, 126, 234], fontSize: 10 },
+                styles: { fontSize: 9 },
+                columnStyles: {
+                    0: { cellWidth: 25 },
+                    1: { cellWidth: 35 },
+                    2: { cellWidth: 25, halign: 'right' },
+                    3: { cellWidth: 25, halign: 'right' },
+                    4: { cellWidth: 30, halign: 'right' },
+                    5: { cellWidth: 25, halign: 'right' }
+                }
+            });
+            
+            // Save PDF
+            const fileName = `${venueName.replace(/[^a-z0-9]/gi, '_')}_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+            
+            showStatus(`PDF generated successfully: ${fileName}`, 'success');
+        }
+
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type}`;
+            setTimeout(() => {
+                statusMessage.className = 'status-message';
+            }, 5000);
+        }
     </script>
 </body>
 </html>
