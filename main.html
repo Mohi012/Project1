@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Main Dashboard">
-    <title>Dashboard</title>
+    <meta name="description" content="Excel Viewer">
+    <title>Excel Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -28,7 +29,7 @@
         }
 
         nav {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 0 2rem;
             display: flex;
@@ -85,12 +86,12 @@
         }
 
         main {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 3rem 2rem;
         }
 
-        .welcome-section {
+        .upload-section {
             background: white;
             border-radius: 20px;
             padding: 3rem;
@@ -99,48 +100,218 @@
             animation: fadeInUp 0.6s ease;
         }
 
-        .welcome-section h1 {
+        .upload-section h1 {
             color: #667eea;
-            font-size: 2.5rem;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 3rem;
+            text-align: center;
+            background: #f8f9ff;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            background: #f0f2ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e8ebff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
             margin-bottom: 1rem;
         }
 
-        .welcome-section p {
+        .upload-area p {
             color: #666;
             font-size: 1.1rem;
-            line-height: 1.6;
-        }
-
-        .content-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 2rem;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
-            animation: fadeInUp 0.6s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-        }
-
-        .card h2 {
-            color: #667eea;
             margin-bottom: 1rem;
-            font-size: 1.5rem;
         }
 
-        .card p {
+        .file-input {
+            display: none;
+        }
+
+        .upload-button {
+            padding: 0.875rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 1rem;
+        }
+
+        .upload-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .file-info {
+            display: none;
+            background: #e8f5e9;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            color: #2e7d32;
+            font-weight: 500;
+        }
+
+        .file-info.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .action-buttons {
+            display: none;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            justify-content: center;
+        }
+
+        .action-buttons.show {
+            display: flex;
+        }
+
+        .read-button {
+            padding: 0.875rem 2.5rem;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .read-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+        }
+
+        .clear-button {
+            padding: 0.875rem 2rem;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .clear-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(244, 67, 54, 0.3);
+        }
+
+        .excel-content {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            animation: fadeInUp 0.6s ease;
+            overflow-x: auto;
+        }
+
+        .excel-content.show {
+            display: block;
+        }
+
+        .sheet-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+
+        .sheet-tab {
+            padding: 0.75rem 1.5rem;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 10px 10px 0 0;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
             color: #666;
-            line-height: 1.6;
+        }
+
+        .sheet-tab:hover {
+            background: #e8ebff;
+        }
+
+        .sheet-tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .sheet-content {
+            display: none;
+        }
+
+        .sheet-content.active {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.875rem;
+            text-align: left;
+            border: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tr:hover {
+            background: #f0f2ff;
+        }
+
+        td {
+            color: #333;
+        }
+
+        td[style*="text-align: right"],
+        td[data-type="number"] {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        td[data-type="date"] {
+            white-space: nowrap;
         }
 
         @keyframes fadeInUp {
@@ -154,18 +325,35 @@
             }
         }
 
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
         @media (max-width: 768px) {
             nav {
                 flex-direction: column;
                 gap: 1rem;
             }
 
-            .welcome-section h1 {
-                font-size: 1.8rem;
+            .upload-section {
+                padding: 2rem;
             }
 
-            .content-grid {
-                grid-template-columns: 1fr;
+            .upload-area {
+                padding: 2rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 0.8rem;
+            }
+
+            th, td {
+                padding: 0.5rem;
             }
         }
     </style>
@@ -173,7 +361,7 @@
 <body>
     <header>
         <nav>
-            <div class="logo">Dashboard</div>
+            <div class="logo">Excel Viewer</div>
             <div class="nav-right">
                 <div class="user-info">
                     <div class="user-avatar" id="userAvatar"></div>
@@ -185,69 +373,237 @@
     </header>
 
     <main>
-        <section class="welcome-section">
-            <h1 id="welcomeMessage">Welcome!</h1>
-            <p>You have successfully logged in. This is your secure dashboard where you can access all your content and features.</p>
+        <section class="upload-section">
+            <h1>Upload Excel File</h1>
+            
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📊</div>
+                <p>Click to upload or drag and drop your Excel file here</p>
+                <p style="font-size: 0.9rem; color: #999;">Supports .xlsx, .xls files</p>
+            </div>
+
+            <input 
+                type="file" 
+                id="fileInput" 
+                class="file-input" 
+                accept=".xlsx,.xls"
+            >
+
+            <div class="file-info" id="fileInfo"></div>
+
+            <div class="action-buttons" id="actionButtons">
+                <button class="read-button" onclick="readExcelFile()">Read & Display File</button>
+                <button class="clear-button" onclick="clearFile()">Clear</button>
+            </div>
         </section>
 
-        <div class="content-grid">
-            <div class="card">
-                <h2>📊 Analytics</h2>
-                <p>View your statistics and performance metrics in real-time.</p>
-            </div>
-
-            <div class="card">
-                <h2>⚙️ Settings</h2>
-                <p>Customize your preferences and manage your account settings.</p>
-            </div>
-
-            <div class="card">
-                <h2>📁 Files</h2>
-                <p>Access and manage your documents and resources.</p>
-            </div>
-
-            <div class="card">
-                <h2>👥 Team</h2>
-                <p>Collaborate with your team members and manage permissions.</p>
-            </div>
-
-            <div class="card">
-                <h2>📧 Messages</h2>
-                <p>Check your inbox and communicate with others.</p>
-            </div>
-
-            <div class="card">
-                <h2>🔔 Notifications</h2>
-                <p>Stay updated with the latest alerts and announcements.</p>
-            </div>
-        </div>
+        <section class="excel-content" id="excelContent">
+            <div class="sheet-tabs" id="sheetTabs"></div>
+            <div id="sheetContainer"></div>
+        </section>
     </main>
 
     <script>
+        let uploadedFile = null;
+        let workbook = null;
+
         // Check if user is logged in
         function checkAuth() {
             const isLoggedIn = sessionStorage.getItem('isLoggedIn');
             const username = sessionStorage.getItem('username');
 
             if (!isLoggedIn || !username) {
-                // Redirect to login if not authenticated
                 window.location.href = 'index.html';
                 return;
             }
 
-            // Display user information
             document.getElementById('usernameDisplay').textContent = username;
-            document.getElementById('welcomeMessage').textContent = `Welcome, ${username}!`;
             document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
         }
 
         function logout() {
-            // Clear session storage
             sessionStorage.removeItem('isLoggedIn');
             sessionStorage.removeItem('username');
-            
-            // Redirect to login page
             window.location.href = 'index.html';
+        }
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const actionButtons = document.getElementById('actionButtons');
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drop area when file is dragged over
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.remove('dragover');
+            }, false);
+        });
+
+        // Handle dropped files
+        uploadArea.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }, false);
+
+        // Handle file input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.name.match(/\.(xlsx|xls)$/)) {
+                alert('Please upload a valid Excel file (.xlsx or .xls)');
+                return;
+            }
+
+            uploadedFile = file;
+            fileInfo.textContent = `✓ File uploaded: ${file.name} (${formatFileSize(file.size)})`;
+            fileInfo.classList.add('show');
+            actionButtons.classList.add('show');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        function readExcelFile() {
+            if (!uploadedFile) {
+                alert('Please upload a file first');
+                return;
+            }
+
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    workbook = XLSX.read(data, { type: 'array', cellStyles: true });
+                    
+                    displayExcelContent();
+                } catch (error) {
+                    alert('Error reading Excel file: ' + error.message);
+                    console.error('Error:', error);
+                }
+            };
+
+            reader.readAsArrayBuffer(uploadedFile);
+        }
+
+        function displayExcelContent() {
+            const excelContent = document.getElementById('excelContent');
+            const sheetTabs = document.getElementById('sheetTabs');
+            const sheetContainer = document.getElementById('sheetContainer');
+
+            sheetTabs.innerHTML = '';
+            sheetContainer.innerHTML = '';
+
+            workbook.SheetNames.forEach((sheetName, index) => {
+                // Create tab button
+                const tab = document.createElement('button');
+                tab.className = 'sheet-tab' + (index === 0 ? ' active' : '');
+                tab.textContent = sheetName;
+                tab.onclick = () => switchSheet(index);
+                sheetTabs.appendChild(tab);
+
+                // Create sheet content
+                const sheetDiv = document.createElement('div');
+                sheetDiv.className = 'sheet-content' + (index === 0 ? ' active' : '');
+                sheetDiv.id = `sheet-${index}`;
+
+                const worksheet = workbook.Sheets[sheetName];
+                const htmlTable = XLSX.utils.sheet_to_html(worksheet, { editable: false });
+                
+                sheetDiv.innerHTML = htmlTable;
+
+                // Process the table to maintain formatting
+                const table = sheetDiv.querySelector('table');
+                if (table) {
+                    processTableFormatting(table, worksheet);
+                }
+
+                sheetContainer.appendChild(sheetDiv);
+            });
+
+            excelContent.classList.add('show');
+            excelContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function processTableFormatting(table, worksheet) {
+            const range = XLSX.utils.decode_range(worksheet['!ref']);
+            
+            for (let R = range.s.r; R <= range.e.r; R++) {
+                for (let C = range.s.c; C <= range.e.c; C++) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                    const cell = worksheet[cellAddress];
+                    
+                    if (cell) {
+                        const cellElement = table.rows[R]?.cells[C];
+                        if (cellElement) {
+                            // Detect cell type and add data attribute
+                            if (cell.t === 'n') {
+                                cellElement.setAttribute('data-type', 'number');
+                            } else if (cell.t === 'd') {
+                                cellElement.setAttribute('data-type', 'date');
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function switchSheet(index) {
+            const tabs = document.querySelectorAll('.sheet-tab');
+            const sheets = document.querySelectorAll('.sheet-content');
+
+            tabs.forEach((tab, i) => {
+                if (i === index) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            sheets.forEach((sheet, i) => {
+                if (i === index) {
+                    sheet.classList.add('active');
+                } else {
+                    sheet.classList.remove('active');
+                }
+            });
+        }
+
+        function clearFile() {
+            uploadedFile = null;
+            workbook = null;
+            fileInput.value = '';
+            fileInfo.classList.remove('show');
+            actionButtons.classList.remove('show');
+            document.getElementById('excelContent').classList.remove('show');
+            fileInfo.textContent = '';
         }
 
         // Run auth check on page load
